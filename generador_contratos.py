@@ -28,6 +28,12 @@ def save_config(data):
     except Exception:
         pass
 
+def substitute_variables(text, context):
+    """Reemplaza {{clave}} por su valor en context."""
+    for k, v in context.items():
+        text = text.replace("{{" + k + "}}", str(v))
+    return text
+
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
@@ -389,15 +395,8 @@ class App(ctk.CTk):
                     
                     # Create a friendly filename based on the pattern
                     pattern = self.entry_filename_pattern.get().strip()
-                    name_for_file = pattern
-                    for k, v in context.items():
-                        name_for_file = name_for_file.replace("{"+k+"}", str(v))
-                        name_for_file = name_for_file.replace("{{ "+k+" }}", str(v))
-                        name_for_file = name_for_file.replace("{{"+k+"}}", str(v))
-                    
-                    # Clean up remaining tags if not found
-                    name_for_file = re.sub(r'\{\{.*?\}\}', '', name_for_file)
-                    name_for_file = re.sub(r'\{.*?\}', '', name_for_file)
+                    name_for_file = substitute_variables(pattern, context)
+                    name_for_file = re.sub(r'\{\{.*?\}\}', '', name_for_file)  # limpiar tags sin valor
                     
                     if not name_for_file.strip():
                         name_for_file = f"Contrato_{index+1}"
@@ -443,10 +442,8 @@ class App(ctk.CTk):
                         subject_f = self.entry_subject.get()
                         body_f = self.txt_body.get("1.0", "end-1c")
                         
-                        # Sustitución de variables con doble llave {{Nombre}}
-                        for k, v in context.items():
-                            subject_f = subject_f.replace("{{"+k+"}}", str(v))
-                            body_f = body_f.replace("{{"+k+"}}", str(v))
+                        subject_f = substitute_variables(subject_f, context)
+                        body_f    = substitute_variables(body_f, context)
                             
                         mail.Subject = subject_f
                         body_esc = html.escape(body_f).replace("\n", "<br>")
@@ -458,17 +455,11 @@ class App(ctk.CTk):
                         try: body_orig = mail.HTMLBody 
                         except: body_orig = mail.Body
                         
-                        # Sustitución de variables con doble llave {{Nombre}} en .oft
-                        for k, v in context.items():
-                            body_orig = body_orig.replace("{{"+k+"}}", str(v))
-
+                        body_orig = substitute_variables(body_orig, context)
                         try: mail.HTMLBody = body_orig
                         except: mail.Body = body_orig
 
-                        sub_orig = mail.Subject or ""
-                        for k, v in context.items():
-                            sub_orig = sub_orig.replace("{{"+k+"}}", str(v))
-                        mail.Subject = sub_orig
+                        mail.Subject = substitute_variables(mail.Subject or "", context)
 
                     mail.To = dest_email
                     mail.Attachments.Add(os.path.abspath(final_attachment_path))

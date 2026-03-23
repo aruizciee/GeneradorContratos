@@ -41,7 +41,7 @@ def _check(app):
         resp.raise_for_status()
         data     = resp.json()
         latest   = data.get("tag_name", "")
-        if not latest or latest <= VERSION:
+        if not latest or _parse_version(latest) <= _parse_version(VERSION):
             return                               # ya tenemos la última versión
 
         asset_url = _find_asset(data)
@@ -53,6 +53,18 @@ def _check(app):
 
     except Exception:
         pass    # sin internet o error de red → silencioso
+
+
+def _parse_version(tag):
+    """Convierte 'v2026.03.23-4' → (2026, 3, 23, 4) para comparación numérica."""
+    try:
+        tag = tag.lstrip("v")
+        date_part, _, build = tag.partition("-")
+        parts = [int(x) for x in date_part.split(".")]
+        parts.append(int(build) if build.isdigit() else 0)
+        return tuple(parts)
+    except Exception:
+        return (0,)
 
 
 def _find_asset(release_data):
@@ -100,14 +112,14 @@ def _download_and_restart(app, asset_url):
         # antes de reemplazar el exe — evita el error de DLL de PyInstaller.
         pid = os.getpid()
         bat_content = (
-            "@echo off\n"
+            f"@echo off\n"
             f":wait\n"
             f'tasklist /fi "PID eq {pid}" 2>nul | find /i "generador_contratos.exe" >nul\n'
             f"if not errorlevel 1 (timeout /t 1 /nobreak >nul & goto wait)\n"
-            "timeout /t 3 /nobreak >nul\n"
+            f"timeout /t 3 /nobreak >nul\n"
             f'move /y "{new_exe}" "{current_exe}"\n'
             f'start "" "{current_exe}"\n'
-            'del "%~f0"\n'
+            f'del "%~f0"\n'
         )
         with open(bat_path, "w") as f:
             f.write(bat_content)
