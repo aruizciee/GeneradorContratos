@@ -52,6 +52,7 @@ class App(ctk.CTk):
         self.excel_data_path = ""
         self.outlook_template_path = ""
         self.output_folder = ""
+        self.excel_columns = []
         
         # --- UI Layout ---
         self.grid_columnconfigure(0, weight=1)
@@ -88,20 +89,36 @@ class App(ctk.CTk):
         frame_excel_config.grid_columnconfigure(1, weight=1)
         
         ctk.CTkLabel(frame_excel_config, text="Columna de Email:").grid(row=0, column=0, padx=(0, 10), pady=0, sticky="w")
-        self.entry_email_col = ctk.CTkEntry(frame_excel_config, placeholder_text="Ej: Email o Correo")
-        self.entry_email_col.insert(0, "Email") # Default value
+        self.entry_email_col = ctk.CTkComboBox(frame_excel_config, values=["Email"], state="normal")
+        self.entry_email_col.set("Email")
         self.entry_email_col.grid(row=0, column=1, padx=0, pady=5, sticky="ew")
 
         ctk.CTkLabel(frame_excel_config, text="Patrón Nombre Archivo:").grid(row=1, column=0, padx=(0, 10), pady=0, sticky="w")
-        self.entry_filename_pattern = ctk.CTkEntry(frame_excel_config, placeholder_text="Ej: {{ Apellidos }}, {{ Nombre }}")
-        self.entry_filename_pattern.insert(0, "{{ Apellidos }}, {{ Nombre }}") # Default value
+        self.entry_filename_pattern = ctk.CTkEntry(frame_excel_config, placeholder_text="Ej: {{Apellidos}}, {{Nombre}}")
+        self.entry_filename_pattern.insert(0, "{{Apellidos}}, {{Nombre}}")
         self.entry_filename_pattern.grid(row=1, column=1, padx=0, pady=5, sticky="ew")
+
+        # Fila de inserción de campos (se activa al cargar Excel)
+        ctk.CTkLabel(frame_excel_config, text="Insertar campo:").grid(row=2, column=0, padx=(0, 10), pady=(4, 0), sticky="w")
+        frame_insert = ctk.CTkFrame(frame_excel_config, fg_color="transparent")
+        frame_insert.grid(row=2, column=1, sticky="ew", pady=(4, 0))
+        self.combo_fields = ctk.CTkComboBox(frame_insert, values=["(carga un Excel primero)"], state="readonly", width=180)
+        self.combo_fields.set("(carga un Excel primero)")
+        self.combo_fields.pack(side="left", padx=(0, 6))
+        ctk.CTkButton(frame_insert, text="📋 Word", width=75, fg_color="gray40",
+                      command=self._copy_field_to_clipboard).pack(side="left", padx=2)
+        ctk.CTkButton(frame_insert, text="→ Patrón", width=75,
+                      command=lambda: self._insert_field(self.entry_filename_pattern)).pack(side="left", padx=2)
+        ctk.CTkButton(frame_insert, text="→ Asunto", width=75,
+                      command=lambda: self._insert_field(self.entry_subject)).pack(side="left", padx=2)
+        ctk.CTkButton(frame_insert, text="→ Cuerpo", width=75,
+                      command=lambda: self._insert_field(self.txt_body, is_textbox=True)).pack(side="left", padx=2)
 
         # Panel de ayuda
         help_text = (
-            "ℹ️  Usa {{NombreColumna}} para insertar datos del Excel — "
-            "en la plantilla Word, en el patrón de nombre de archivo, "
-            "y en el asunto y cuerpo del correo."
+            "ℹ️  Carga el Excel primero para ver los campos disponibles. "
+            "Usa 📋 Word para copiar {{campo}} y pegarlo en tu plantilla Word. "
+            "Usa → Patrón / → Asunto / → Cuerpo para insertar campos directamente."
         )
         lbl_help = ctk.CTkLabel(
             self.main_frame, text=help_text,
@@ -195,6 +212,43 @@ class App(ctk.CTk):
             command=lambda: check_for_updates(self)
         ).grid(row=0, column=1, sticky="e")
 
+    def _update_columns(self):
+        """Lee las cabeceras del Excel y actualiza los ComboBox de campos."""
+        try:
+            cols = list(pd.read_excel(self.excel_data_path, nrows=0).columns.astype(str))
+        except Exception:
+            return
+        self.excel_columns = cols
+        self.entry_email_col.configure(values=cols)
+        self.combo_fields.configure(values=cols, state="readonly")
+        if cols:
+            self.combo_fields.set(cols[0])
+            # Si el valor actual de email col no existe en las nuevas cols, sugerir la primera
+            if self.entry_email_col.get() not in cols:
+                self.entry_email_col.set(cols[0])
+
+    def _copy_field_to_clipboard(self):
+        """Copia {{campo}} al portapapeles para pegar en la plantilla Word."""
+        col = self.combo_fields.get()
+        if not col or col == "(carga un Excel primero)":
+            return
+        tag = f"{{{{{col}}}}}"
+        self.clipboard_clear()
+        self.clipboard_append(tag)
+        messagebox.showinfo("Copiado", f"{tag} copiado al portapapeles.\nPégalo en tu plantilla Word.", icon="info")
+
+    def _insert_field(self, widget, is_textbox=False):
+        """Inserta {{campo}} en la posición del cursor del widget destino."""
+        col = self.combo_fields.get()
+        if not col or col == "(carga un Excel primero)":
+            return
+        tag = f"{{{{{col}}}}}"
+        if is_textbox:
+            widget.insert("insert", tag)
+        else:
+            widget.insert(widget.index("insert"), tag)
+        widget.focus_set()
+
     def _restore_config(self):
         cfg = load_config()
         if not cfg:
@@ -210,10 +264,12 @@ class App(ctk.CTk):
             if path and os.path.exists(path):
                 setattr(self, attr, path)
                 lbl.configure(text=os.path.basename(path) if os.path.isfile(path) else path, text_color="black")
-        # Entradas de texto
+        # Actualizar columnas si hay Excel guardado
+        if self.excel_data_path:
+            self._update_columns()
+        # Email col (ComboBox)
         if cfg.get("email_col"):
-            self.entry_email_col.delete(0, "end")
-            self.entry_email_col.insert(0, cfg["email_col"])
+            self.entry_email_col.set(cfg["email_col"])
         if cfg.get("filename_pattern"):
             self.entry_filename_pattern.delete(0, "end")
             self.entry_filename_pattern.insert(0, cfg["filename_pattern"])
@@ -286,6 +342,7 @@ class App(ctk.CTk):
         if filename:
             self.excel_data_path = filename
             self.lbl_excel.configure(text=os.path.basename(filename), text_color="black")
+            self._update_columns()
             self._save_config()
 
     def select_output(self):
