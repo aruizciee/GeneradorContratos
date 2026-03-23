@@ -24,18 +24,22 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
-      - name: Compilar ejecutable
-        run: |
-          pyinstaller --noconfirm --onefile --windowed `
-            --collect-all customtkinter `
-            generador_contratos.py
-
       - name: Generar tag de versión
         id: version
         run: |
           $date = Get-Date -Format "yyyy.MM.dd"
           $run  = "${{ github.run_number }}"
-          echo "TAG=v$date-$run" >> $env:GITHUB_OUTPUT
+          $tag  = "v$date-$run"
+          echo "TAG=$tag" >> $env:GITHUB_OUTPUT
+          # Inyectar versión en version.py antes de compilar
+          "VERSION = `"$tag`"" | Set-Content version.py
+
+      - name: Compilar ejecutable
+        run: |
+          pyinstaller --noconfirm --onefile --windowed `
+            --collect-all customtkinter `
+            --add-data "version.py;." `
+            generador_contratos.py
 
       - name: Crear Release y subir .exe
         uses: softprops/action-gh-release@v2

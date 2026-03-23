@@ -6,6 +6,8 @@ import win32com.client as win32
 import os
 from datetime import datetime
 import threading
+from auto_updater import check_for_updates
+from version import VERSION
 
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
@@ -16,6 +18,9 @@ class App(ctk.CTk):
         
         self.title("Generador de Contratos y Correos")
         self.geometry("800x750")
+
+        # Comprobar actualizaciones al arrancar (en segundo plano)
+        self.after(3000, lambda: check_for_updates(self))
         
         # --- Variables ---
         self.word_template_path = ""
@@ -123,6 +128,21 @@ class App(ctk.CTk):
         self.log_box = ctk.CTkTextbox(self.main_frame, height=150, state="disabled")
         self.log_box.grid(row=9, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
         self.main_frame.grid_rowconfigure(9, weight=1)
+
+        # Barra inferior: versión + botón de actualización manual
+        frame_bottom = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        frame_bottom.grid(row=10, column=0, columnspan=3, sticky="ew", padx=10, pady=(0, 10))
+        frame_bottom.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(frame_bottom, text=f"Versión: {VERSION}", text_color="gray", font=("System", 11)).grid(row=0, column=0, sticky="w")
+        ctk.CTkButton(
+            frame_bottom,
+            text="Buscar actualizaciones",
+            width=160,
+            height=28,
+            font=("System", 11),
+            command=lambda: check_for_updates(self)
+        ).grid(row=0, column=1, sticky="e")
 
     def log(self, text):
         self.log_box.configure(state="normal")
