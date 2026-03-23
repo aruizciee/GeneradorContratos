@@ -4,10 +4,29 @@ import pandas as pd
 from docxtpl import DocxTemplate
 import win32com.client as win32
 import os
+import re
+import json
+import html
 from datetime import datetime
 import threading
 from auto_updater import check_for_updates
 from version import VERSION
+
+CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".generador_contratos_config.json")
+
+def load_config():
+    try:
+        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def save_config(data):
+    try:
+        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
@@ -124,14 +143,27 @@ class App(ctk.CTk):
         self.btn_generate = ctk.CTkButton(self.main_frame, text="Generar Contratos y Correos", command=self.start_generation, height=40, font=("System", 14, "bold"))
         self.btn_generate.grid(row=8, column=0, columnspan=3, pady=20)
         
+        # Barra de progreso
+        self.progress_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        self.progress_frame.grid(row=9, column=0, columnspan=3, sticky="ew", padx=10, pady=(5, 0))
+        self.progress_frame.grid_columnconfigure(0, weight=1)
+        self.progress_bar = ctk.CTkProgressBar(self.progress_frame)
+        self.progress_bar.grid(row=0, column=0, sticky="ew", pady=(0, 2))
+        self.progress_bar.set(0)
+        self.lbl_progress = ctk.CTkLabel(self.progress_frame, text="", text_color="gray", font=("System", 11))
+        self.lbl_progress.grid(row=1, column=0, sticky="w")
+
         # Log Textbox
         self.log_box = ctk.CTkTextbox(self.main_frame, height=150, state="disabled")
-        self.log_box.grid(row=9, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
-        self.main_frame.grid_rowconfigure(9, weight=1)
+        self.log_box.grid(row=10, column=0, columnspan=3, padx=10, pady=10, sticky="nsew")
+        self.main_frame.grid_rowconfigure(10, weight=1)
+
+        # Restaurar configuración guardada
+        self._restore_config()
 
         # Barra inferior: versión + botón de actualización manual
         frame_bottom = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        frame_bottom.grid(row=10, column=0, columnspan=3, sticky="ew", padx=10, pady=(0, 10))
+        frame_bottom.grid(row=11, column=0, columnspan=3, sticky="ew", padx=10, pady=(0, 10))
         frame_bottom.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(frame_bottom, text=f"Versión: {VERSION}", text_color="gray", font=("System", 11)).grid(row=0, column=0, sticky="w")
@@ -143,6 +175,58 @@ class App(ctk.CTk):
             font=("System", 11),
             command=lambda: check_for_updates(self)
         ).grid(row=0, column=1, sticky="e")
+
+    def _restore_config(self):
+        cfg = load_config()
+        if not cfg:
+            return
+        # Rutas de archivos
+        for attr, lbl, key in [
+            ("word_template_path",   self.lbl_word,   "word_template_path"),
+            ("excel_data_path",      self.lbl_excel,  "excel_data_path"),
+            ("output_folder",        self.lbl_output, "output_folder"),
+            ("outlook_template_path",self.lbl_oft_path,"outlook_template_path"),
+        ]:
+            path = cfg.get(key, "")
+            if path and os.path.exists(path):
+                setattr(self, attr, path)
+                lbl.configure(text=os.path.basename(path) if os.path.isfile(path) else path, text_color="black")
+        # Entradas de texto
+        if cfg.get("email_col"):
+            self.entry_email_col.delete(0, "end")
+            self.entry_email_col.insert(0, cfg["email_col"])
+        if cfg.get("filename_pattern"):
+            self.entry_filename_pattern.delete(0, "end")
+            self.entry_filename_pattern.insert(0, cfg["filename_pattern"])
+        if cfg.get("email_subject"):
+            self.entry_subject.delete(0, "end")
+            self.entry_subject.insert(0, cfg["email_subject"])
+        if cfg.get("email_body"):
+            self.txt_body.delete("1.0", "end")
+            self.txt_body.insert("1.0", cfg["email_body"])
+        # Modo email, formato y modo envío
+        if cfg.get("email_mode"):
+            self.email_mode.set(cfg["email_mode"])
+            self.toggle_email_mode()
+        if cfg.get("output_format"):
+            self.output_format.set(cfg["output_format"])
+        if cfg.get("send_mode"):
+            self.send_mode.set(cfg["send_mode"])
+
+    def _save_config(self):
+        save_config({
+            "word_template_path":    self.word_template_path,
+            "excel_data_path":       self.excel_data_path,
+            "output_folder":         self.output_folder,
+            "outlook_template_path": self.outlook_template_path,
+            "email_col":             self.entry_email_col.get(),
+            "filename_pattern":      self.entry_filename_pattern.get(),
+            "email_subject":         self.entry_subject.get(),
+            "email_body":            self.txt_body.get("1.0", "end-1c"),
+            "email_mode":            self.email_mode.get(),
+            "output_format":         self.output_format.get(),
+            "send_mode":             self.send_mode.get(),
+        })
 
     def log(self, text):
         self.log_box.configure(state="normal")
@@ -176,24 +260,28 @@ class App(ctk.CTk):
         if filename:
             self.word_template_path = filename
             self.lbl_word.configure(text=os.path.basename(filename), text_color="black")
+            self._save_config()
 
     def select_excel(self):
         filename = filedialog.askopenfilename(title="Seleccionar Datos Excel", filetypes=[("Excel Files", "*.xlsx")])
         if filename:
             self.excel_data_path = filename
             self.lbl_excel.configure(text=os.path.basename(filename), text_color="black")
+            self._save_config()
 
     def select_output(self):
         foldername = filedialog.askdirectory(title="Seleccionar Carpeta de Salida")
         if foldername:
             self.output_folder = foldername
             self.lbl_output.configure(text=foldername, text_color="black")
+            self._save_config()
 
     def select_oft(self):
         filename = filedialog.askopenfilename(title="Seleccionar Plantilla Outlook", filetypes=[("Outlook Template", "*.oft")])
         if filename:
             self.outlook_template_path = filename
             self.lbl_oft_path.configure(text=os.path.basename(filename), text_color="black")
+            self._save_config()
 
     def start_generation(self):
         if not self.word_template_path:
@@ -227,9 +315,12 @@ class App(ctk.CTk):
                 messagebox.showwarning("Faltan datos", "Por favor, seleccione la plantilla .oft de Outlook.")
                 return
 
+        self._save_config()
         self.btn_generate.configure(state="disabled")
+        self.progress_bar.set(0)
+        self.lbl_progress.configure(text="")
         self.log("=== INICIANDO PROCESO ===")
-        
+
         # Run in a separate thread so UI doesn't freeze
         threading.Thread(target=self.process_data, daemon=True).start()
 
@@ -265,8 +356,10 @@ class App(ctk.CTk):
 
             rows_total = len(df)
             self.log(f"Se encontraron {rows_total} registros a procesar.")
+            self.after(0, lambda: self.lbl_progress.configure(text=f"0 / {rows_total}"))
 
             for index, row in df.iterrows():
+                row_num = index + 1
                 try:
                     # Context for DocxTemplate and Email
                     context = {}
@@ -290,7 +383,6 @@ class App(ctk.CTk):
                         name_for_file = name_for_file.replace("{{"+k+"}}", str(v))
                     
                     # Clean up remaining tags if not found
-                    import re
                     name_for_file = re.sub(r'\{\{.*?\}\}', '', name_for_file)
                     name_for_file = re.sub(r'\{.*?\}', '', name_for_file)
                     
@@ -344,7 +436,6 @@ class App(ctk.CTk):
                             body_f = body_f.replace("{"+k+"}", str(v))
                             
                         mail.Subject = subject_f
-                        import html
                         body_esc = html.escape(body_f).replace("\n", "<br>")
                         mail.HTMLBody = f"<html><body>{body_esc}</body></html>"
                         
@@ -376,10 +467,17 @@ class App(ctk.CTk):
                         mail.Save()
                         action_str = "Guardado borrador para"
                         
-                    self.log(f"Fila {index+1}: OK - Doc: {os.path.basename(output_file_path)} | Correo: {action_str} {dest_email}")
+                    self.log(f"Fila {row_num}: OK - Doc: {os.path.basename(final_attachment_path)} | Correo: {action_str} {dest_email}")
 
                 except Exception as e:
-                    self.log(f"Error procesando fila {index+1}: {e}")
+                    self.log(f"Error procesando fila {row_num}: {e}")
+
+                finally:
+                    progress = row_num / rows_total
+                    self.after(0, lambda p=progress, n=row_num, t=rows_total: (
+                        self.progress_bar.set(p),
+                        self.lbl_progress.configure(text=f"{n} / {t}")
+                    ))
 
             self.log("=== PROCESO COMPLETADO ===")
             messagebox.showinfo("Completado", "El proceso de generación ha finalizado.")
