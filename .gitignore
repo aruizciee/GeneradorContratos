@@ -1,0 +1,29 @@
+# Ejecutable compilado
+*.exe
+
+# Contratos generados
+contratos/
+
+# Archivos con datos personales / plantillas con datos reales
+*.xlsx
+*.pdf
+
+# Carpetas de compilación PyInstaller
+build/
+dist/
+*.spec
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos comprimidos con datos
+*.zip

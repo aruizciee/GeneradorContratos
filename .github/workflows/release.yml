@@ -1,0 +1,49 @@
+name: Build y Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Compilar ejecutable
+        run: |
+          pyinstaller --noconfirm --onefile --windowed `
+            --collect-all customtkinter `
+            generador_contratos.py
+
+      - name: Generar tag de versión
+        id: version
+        run: |
+          $date = Get-Date -Format "yyyy.MM.dd"
+          $run  = "${{ github.run_number }}"
+          echo "TAG=v$date-$run" >> $env:GITHUB_OUTPUT
+
+      - name: Crear Release y subir .exe
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.TAG }}
+          name: "Release ${{ steps.version.outputs.TAG }}"
+          body: |
+            Release automática generada al hacer push a `main`.
+
+            **Commit:** ${{ github.sha }}
+            **Mensaje:** ${{ github.event.head_commit.message }}
+          files: dist/generador_contratos.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
