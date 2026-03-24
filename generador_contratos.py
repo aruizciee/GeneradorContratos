@@ -298,12 +298,12 @@ class App(ctk.CTk):
 
         ctk.CTkLabel(f, text="Configura el correo electrónico",
                      font=("System", 13, "bold")).grid(
-            row=0, column=0, columnspan=3, pady=(16, 12), padx=16, sticky="w")
+            row=0, column=0, columnspan=3, pady=(12, 6), padx=16, sticky="w")
 
         # Modo email
         self.email_mode = ctk.StringVar(value="manual")
         mode_frame = ctk.CTkFrame(f, fg_color="transparent")
-        mode_frame.grid(row=1, column=0, columnspan=3, padx=16, sticky="w")
+        mode_frame.grid(row=1, column=0, columnspan=3, padx=16, pady=(0, 4), sticky="w")
         ctk.CTkRadioButton(mode_frame, text="Escribir asunto y cuerpo",
                            variable=self.email_mode, value="manual",
                            command=self.toggle_email_mode).pack(side="left", padx=(0, 20))
@@ -321,7 +321,7 @@ class App(ctk.CTk):
         self.entry_subject = ctk.CTkEntry(self.email_inner,
                                           placeholder_text="Ej: Contrato adjunto — {{Nombre}}")
         self.lbl_body = ctk.CTkLabel(self.email_inner, text="Cuerpo:")
-        self.txt_body = ctk.CTkTextbox(self.email_inner, height=110)
+        self.txt_body = ctk.CTkTextbox(self.email_inner, height=75)
 
         # Template
         self.lbl_oft      = ctk.CTkLabel(self.email_inner, text="Archivo .oft:")
@@ -331,14 +331,31 @@ class App(ctk.CTk):
                                            command=self.select_oft)
         self.toggle_email_mode()
 
+        # Insertar campo — justo debajo del asunto/cuerpo
+        ctk.CTkLabel(f, text="Insertar campo:").grid(row=3, column=0, padx=16, pady=(6, 4), sticky="w")
+        field_row = ctk.CTkFrame(f, fg_color="transparent")
+        field_row.grid(row=3, column=1, columnspan=2, sticky="ew", padx=16, pady=(6, 4))
+        field_row.grid_columnconfigure(0, weight=1)
+        self.combo_fields_email = ctk.CTkComboBox(field_row, values=["(carga un Excel primero)"], state="readonly")
+        self.combo_fields_email.set("(carga un Excel primero)")
+        self.combo_fields_email.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+        btn_row = ctk.CTkFrame(field_row, fg_color="transparent")
+        btn_row.grid(row=0, column=1)
+        ctk.CTkButton(btn_row, text="📋 Copiar", width=85, fg_color="gray40",
+                      command=self._copy_field_email).pack(side="left", padx=2)
+        ctk.CTkButton(btn_row, text="→ Asunto", width=85,
+                      command=lambda: self._insert_field_email(self.entry_subject)).pack(side="left", padx=2)
+        ctk.CTkButton(btn_row, text="→ Cuerpo", width=85,
+                      command=lambda: self._insert_field_email(self.txt_body, is_textbox=True)).pack(side="left", padx=2)
+
         # Separador
         ctk.CTkFrame(f, height=1, fg_color="gray70").grid(
-            row=3, column=0, columnspan=3, sticky="ew", padx=16, pady=10)
+            row=4, column=0, columnspan=3, sticky="ew", padx=16, pady=(6, 4))
 
         # Cuenta + formato + modo envío
-        ctk.CTkLabel(f, text="Cuenta de envío:").grid(row=4, column=0, padx=16, pady=4, sticky="w")
+        ctk.CTkLabel(f, text="Cuenta de envío:").grid(row=5, column=0, padx=16, pady=3, sticky="w")
         acc_row = ctk.CTkFrame(f, fg_color="transparent")
-        acc_row.grid(row=4, column=1, columnspan=2, sticky="ew", padx=16, pady=4)
+        acc_row.grid(row=5, column=1, columnspan=2, sticky="ew", padx=16, pady=3)
         acc_row.grid_columnconfigure(0, weight=1)
         self.combo_account = ctk.CTkComboBox(acc_row, values=["(cargando…)"], state="readonly")
         self.combo_account.set("(cargando…)")
@@ -346,39 +363,20 @@ class App(ctk.CTk):
         ctk.CTkButton(acc_row, text="↺", width=32,
                       command=self._load_outlook_accounts).grid(row=0, column=1, padx=(6, 0))
 
-        ctk.CTkLabel(f, text="Formato archivo:").grid(row=5, column=0, padx=16, pady=4, sticky="w")
+        ctk.CTkLabel(f, text="Formato archivo:").grid(row=6, column=0, padx=16, pady=3, sticky="w")
         self.output_format = ctk.StringVar(value="pdf")
         fmt_row = ctk.CTkFrame(f, fg_color="transparent")
-        fmt_row.grid(row=5, column=1, columnspan=2, sticky="w", padx=16, pady=4)
+        fmt_row.grid(row=6, column=1, columnspan=2, sticky="w", padx=16, pady=3)
         ctk.CTkRadioButton(fmt_row, text="PDF", variable=self.output_format, value="pdf").pack(side="left", padx=(0, 16))
         ctk.CTkRadioButton(fmt_row, text="Word (.docx)", variable=self.output_format, value="docx").pack(side="left")
 
-        ctk.CTkLabel(f, text="Modo envío:").grid(row=6, column=0, padx=16, pady=4, sticky="w")
+        ctk.CTkLabel(f, text="Modo envío:").grid(row=7, column=0, padx=16, pady=3, sticky="w")
         self.send_mode = ctk.StringVar(value="draft")
         snd_row = ctk.CTkFrame(f, fg_color="transparent")
-        snd_row.grid(row=6, column=1, columnspan=2, sticky="w", padx=16, pady=4)
-        ctk.CTkRadioButton(snd_row, text="Guardar en Borradores", variable=self.send_mode, value="draft").pack(side="left", padx=(0, 12))
-        ctk.CTkRadioButton(snd_row, text="Enviar directamente", variable=self.send_mode, value="send").pack(side="left", padx=(0, 12))
+        snd_row.grid(row=7, column=1, columnspan=2, sticky="w", padx=16, pady=3)
+        ctk.CTkRadioButton(snd_row, text="Guardar en Borradores", variable=self.send_mode, value="draft").pack(side="left", padx=(0, 10))
+        ctk.CTkRadioButton(snd_row, text="Enviar directamente", variable=self.send_mode, value="send").pack(side="left", padx=(0, 10))
         ctk.CTkRadioButton(snd_row, text="Solo generar archivos", variable=self.send_mode, value="none").pack(side="left")
-
-        # Insertar campo (correo)
-        ctk.CTkFrame(f, height=1, fg_color="gray70").grid(
-            row=7, column=0, columnspan=3, sticky="ew", padx=16, pady=(10, 6))
-        ctk.CTkLabel(f, text="Insertar campo:").grid(row=8, column=0, padx=16, pady=4, sticky="w")
-        field_row = ctk.CTkFrame(f, fg_color="transparent")
-        field_row.grid(row=8, column=1, columnspan=2, sticky="ew", padx=16, pady=4)
-        field_row.grid_columnconfigure(0, weight=1)
-        self.combo_fields_email = ctk.CTkComboBox(field_row, values=["(carga un Excel primero)"], state="readonly")
-        self.combo_fields_email.set("(carga un Excel primero)")
-        self.combo_fields_email.grid(row=0, column=0, sticky="ew", padx=(0, 8))
-        btn_row = ctk.CTkFrame(field_row, fg_color="transparent")
-        btn_row.grid(row=0, column=1)
-        ctk.CTkButton(btn_row, text="📋 Copiar", width=90, fg_color="gray40",
-                      command=self._copy_field_email).pack(side="left", padx=2)
-        ctk.CTkButton(btn_row, text="→ Asunto", width=90,
-                      command=lambda: self._insert_field_email(self.entry_subject)).pack(side="left", padx=2)
-        ctk.CTkButton(btn_row, text="→ Cuerpo", width=90,
-                      command=lambda: self._insert_field_email(self.txt_body, is_textbox=True)).pack(side="left", padx=2)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # PASO 4 — Generar
