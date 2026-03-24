@@ -287,10 +287,6 @@ class App(ctk.CTk):
                       command=self._copy_field_to_clipboard).pack(side="left", padx=2)
         ctk.CTkButton(btn_frame, text="→ Patrón", width=90,
                       command=lambda: self._insert_field(self.entry_filename_pattern)).pack(side="left", padx=2)
-        ctk.CTkButton(btn_frame, text="→ Asunto", width=90,
-                      command=lambda: self._insert_field(self.entry_subject)).pack(side="left", padx=2)
-        ctk.CTkButton(btn_frame, text="→ Cuerpo", width=90,
-                      command=lambda: self._insert_field(self.txt_body, is_textbox=True)).pack(side="left", padx=2)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # PASO 3 — Correo
@@ -361,8 +357,28 @@ class App(ctk.CTk):
         self.send_mode = ctk.StringVar(value="draft")
         snd_row = ctk.CTkFrame(f, fg_color="transparent")
         snd_row.grid(row=6, column=1, columnspan=2, sticky="w", padx=16, pady=4)
-        ctk.CTkRadioButton(snd_row, text="Guardar en Borradores", variable=self.send_mode, value="draft").pack(side="left", padx=(0, 16))
-        ctk.CTkRadioButton(snd_row, text="Enviar directamente", variable=self.send_mode, value="send").pack(side="left")
+        ctk.CTkRadioButton(snd_row, text="Guardar en Borradores", variable=self.send_mode, value="draft").pack(side="left", padx=(0, 12))
+        ctk.CTkRadioButton(snd_row, text="Enviar directamente", variable=self.send_mode, value="send").pack(side="left", padx=(0, 12))
+        ctk.CTkRadioButton(snd_row, text="Solo generar archivos", variable=self.send_mode, value="none").pack(side="left")
+
+        # Insertar campo (correo)
+        ctk.CTkFrame(f, height=1, fg_color="gray70").grid(
+            row=7, column=0, columnspan=3, sticky="ew", padx=16, pady=(10, 6))
+        ctk.CTkLabel(f, text="Insertar campo:").grid(row=8, column=0, padx=16, pady=4, sticky="w")
+        field_row = ctk.CTkFrame(f, fg_color="transparent")
+        field_row.grid(row=8, column=1, columnspan=2, sticky="ew", padx=16, pady=4)
+        field_row.grid_columnconfigure(0, weight=1)
+        self.combo_fields_email = ctk.CTkComboBox(field_row, values=["(carga un Excel primero)"], state="readonly")
+        self.combo_fields_email.set("(carga un Excel primero)")
+        self.combo_fields_email.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+        btn_row = ctk.CTkFrame(field_row, fg_color="transparent")
+        btn_row.grid(row=0, column=1)
+        ctk.CTkButton(btn_row, text="📋 Copiar", width=90, fg_color="gray40",
+                      command=self._copy_field_email).pack(side="left", padx=2)
+        ctk.CTkButton(btn_row, text="→ Asunto", width=90,
+                      command=lambda: self._insert_field_email(self.entry_subject)).pack(side="left", padx=2)
+        ctk.CTkButton(btn_row, text="→ Cuerpo", width=90,
+                      command=lambda: self._insert_field_email(self.txt_body, is_textbox=True)).pack(side="left", padx=2)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # PASO 4 — Generar
@@ -436,8 +452,10 @@ class App(ctk.CTk):
         self.excel_columns = cols
         self.entry_email_col.configure(values=cols)
         self.combo_fields.configure(values=cols, state="readonly")
+        self.combo_fields_email.configure(values=cols, state="readonly")
         if cols:
             self.combo_fields.set(cols[0])
+            self.combo_fields_email.set(cols[0])
             if self.entry_email_col.get() not in cols:
                 self.entry_email_col.set(cols[0])
 
@@ -445,13 +463,29 @@ class App(ctk.CTk):
         col = self.combo_fields.get()
         if not col or col == "(carga un Excel primero)":
             return
-        tag = f"{{{{{col}}}}}"
         self.clipboard_clear()
-        self.clipboard_append(tag)
-        messagebox.showinfo("Copiado", f"{tag} copiado al portapapeles.\nPégalo en tu plantilla Word.")
+        self.clipboard_append(f"{{{{{col}}}}}")
 
     def _insert_field(self, widget, is_textbox=False):
         col = self.combo_fields.get()
+        if not col or col == "(carga un Excel primero)":
+            return
+        tag = f"{{{{{col}}}}}"
+        if is_textbox:
+            widget.insert("insert", tag)
+        else:
+            widget.insert(widget.index("insert"), tag)
+        widget.focus_set()
+
+    def _copy_field_email(self):
+        col = self.combo_fields_email.get()
+        if not col or col == "(carga un Excel primero)":
+            return
+        self.clipboard_clear()
+        self.clipboard_append(f"{{{{{col}}}}}")
+
+    def _insert_field_email(self, widget, is_textbox=False):
+        col = self.combo_fields_email.get()
         if not col or col == "(carga un Excel primero)":
             return
         tag = f"{{{{{col}}}}}"
@@ -481,6 +515,8 @@ class App(ctk.CTk):
                                text_color="black")
         if self.excel_data_path:
             self._update_columns()
+            if cfg.get("email_col"):
+                self.combo_fields_email.set(cfg["email_col"])
         if cfg.get("email_col"):
             self.entry_email_col.set(cfg["email_col"])
         if cfg.get("filename_pattern"):
@@ -607,30 +643,35 @@ class App(ctk.CTk):
                 self.log(f"Columnas disponibles: {', '.join(df.columns)}")
                 return
 
+            outlook      = None
+            send_account = None
+            if s_mode != "none":
+                try:
+                    import pythoncom
+                    pythoncom.CoInitialize()
+                    outlook = win32.Dispatch("Outlook.Application")
+                    selected_label = self.combo_account.get()
+                    for name, smtp in self.outlook_accounts:
+                        if selected_label.startswith(name):
+                            accounts = outlook.Session.Accounts
+                            for i in range(1, accounts.Count + 1):
+                                if accounts.Item(i).SmtpAddress == smtp:
+                                    send_account = accounts.Item(i)
+                                    break
+                            break
+                    if send_account:
+                        self.log(f"Cuenta: {selected_label}")
+                except Exception as e:
+                    self.log(f"ERROR iniciando Outlook: {e}")
+                    return
+
             try:
-                import pythoncom
-                pythoncom.CoInitialize()
-                outlook = win32.Dispatch("Outlook.Application")
-
-                selected_label = self.combo_account.get()
-                send_account   = None
-                for name, smtp in self.outlook_accounts:
-                    if selected_label.startswith(name):
-                        accounts = outlook.Session.Accounts
-                        for i in range(1, accounts.Count + 1):
-                            if accounts.Item(i).SmtpAddress == smtp:
-                                send_account = accounts.Item(i)
-                                break
-                        break
-                if send_account:
-                    self.log(f"Cuenta: {selected_label}")
-
                 word_app = None
                 if self.output_format.get() == "pdf":
                     word_app = win32.Dispatch("Word.Application")
                     word_app.Visible = False
             except Exception as e:
-                self.log(f"ERROR iniciando Outlook/Word: {e}")
+                self.log(f"ERROR iniciando Word: {e}")
                 return
 
             rows_total = len(df)
@@ -672,6 +713,10 @@ class App(ctk.CTk):
                             final_path = out_docx
                     else:
                         final_path = out_docx
+
+                    if s_mode == "none":
+                        self.log(f"Fila {row_num}: OK — {os.path.basename(final_path)}")
+                        continue
 
                     dest_email = context.get(email_col, "").strip()
                     if not dest_email:
