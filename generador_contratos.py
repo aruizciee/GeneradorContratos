@@ -33,7 +33,7 @@ def substitute_variables(text, context):
         text = text.replace("{{" + k + "}}", str(v))
     return text
 
-ctk.set_appearance_mode("System")
+ctk.set_appearance_mode("Segoe UI")
 ctk.set_default_color_theme("blue")
 
 STEPS = ["Archivos", "Configuración", "Correo", "Generar"]
@@ -61,13 +61,13 @@ class App(ctk.CTk):
         self.grid_rowconfigure(1, weight=1)
 
         # ── Cabecera ──────────────────────────────────────────────────────────
-        hdr = ctk.CTkFrame(self, fg_color=("gray85", "gray20"), corner_radius=0)
+        hdr = ctk.CTkFrame(self, fg_color=("#1f538d", "#14375e"), corner_radius=0)
         hdr.grid(row=0, column=0, sticky="ew")
         hdr.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(hdr, text="Generador de Contratos y Correos",
-                     font=("System", 16, "bold")).grid(row=0, column=0, pady=12, padx=20, sticky="w")
-        ctk.CTkLabel(hdr, text=f"v{VERSION}", text_color="gray",
-                     font=("System", 11)).grid(row=0, column=1, pady=12, padx=20, sticky="e")
+        ctk.CTkLabel(hdr, text="Generador de Contratos y Correos", text_color="white",
+                     font=("Segoe UI", 16, "bold")).grid(row=0, column=0, pady=12, padx=20, sticky="w")
+        ctk.CTkLabel(hdr, text=f"v{VERSION}", text_color=("gray60", "gray50"),
+                     font=("Segoe UI", 11)).grid(row=0, column=1, pady=12, padx=20, sticky="e")
 
         # ── Contenido central ─────────────────────────────────────────────────
         self.content = ctk.CTkFrame(self, fg_color="transparent")
@@ -97,7 +97,7 @@ class App(ctk.CTk):
                                       command=self._prev_step)
         self.btn_prev.grid(row=0, column=0, padx=(0, 8))
 
-        ctk.CTkLabel(nav, text="", font=("System", 11)).grid(row=0, column=1)  # spacer
+        ctk.CTkLabel(nav, text="", font=("Segoe UI", 11)).grid(row=0, column=1)  # spacer
 
         self.btn_next = ctk.CTkButton(nav, text="Siguiente →", width=120,
                                       command=self._next_step)
@@ -108,7 +108,7 @@ class App(ctk.CTk):
         foot.grid(row=3, column=0, sticky="ew", padx=24, pady=(0, 8))
         foot.grid_columnconfigure(0, weight=1)
         ctk.CTkButton(foot, text="Buscar actualizaciones", width=160, height=24,
-                      font=("System", 11), fg_color="transparent", border_width=1,
+                      font=("Segoe UI", 11), fg_color="transparent", border_width=1,
                       text_color=("gray40", "gray60"),
                       command=lambda: check_for_updates(self)).grid(row=0, column=1, sticky="e")
 
@@ -130,17 +130,17 @@ class App(ctk.CTk):
 
         for i, name in enumerate(STEPS):
             col = i * 2
-            dot = ctk.CTkLabel(self.ind_frame, text="●", font=("System", 18),
+            dot = ctk.CTkLabel(self.ind_frame, text="●", font=("Segoe UI", 18),
                                text_color="gray60", width=28)
             dot.grid(row=0, column=col)
-            lbl = ctk.CTkLabel(self.ind_frame, text=name, font=("System", 11),
+            lbl = ctk.CTkLabel(self.ind_frame, text=name, font=("Segoe UI", 11),
                                text_color="gray60")
             lbl.grid(row=1, column=col)
             self.ind_dots.append(dot)
             self.ind_labels.append(lbl)
             if i < len(STEPS) - 1:
                 ctk.CTkLabel(self.ind_frame, text="────", text_color="gray50",
-                             font=("System", 11)).grid(row=0, column=col + 1, sticky="ew")
+                             font=("Segoe UI", 11)).grid(row=0, column=col + 1, sticky="ew")
 
     def _update_step_indicator(self, step):
         for i, (dot, lbl) in enumerate(zip(self.ind_dots, self.ind_labels)):
@@ -150,11 +150,11 @@ class App(ctk.CTk):
             elif i == step:
                 dot.configure(text="●", text_color=("dodger blue", "dodger blue"))
                 lbl.configure(text_color=("black", "white"),
-                               font=("System", 11, "bold"))
+                               font=("Segoe UI", 11, "bold"))
             else:
                 dot.configure(text="●", text_color="gray60")
                 lbl.configure(text_color="gray60",
-                               font=("System", 11))
+                               font=("Segoe UI", 11))
 
     def _show_step(self, step):
         self.current_step = step
@@ -215,7 +215,7 @@ class App(ctk.CTk):
         f.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(f, text="Selecciona los archivos necesarios",
-                     font=("System", 13, "bold")).grid(
+                     font=("Segoe UI", 13, "bold")).grid(
             row=0, column=0, columnspan=3, pady=(16, 20), padx=16, sticky="w")
 
         rows = [
@@ -225,10 +225,10 @@ class App(ctk.CTk):
         ]
         for i, (label, attr, cmd, icon) in enumerate(rows, start=1):
             ctk.CTkLabel(f, text=f"{icon}  {label}",
-                         font=("System", 12)).grid(row=i*2-1, column=0, columnspan=3,
+                         font=("Segoe UI", 12)).grid(row=i*2-1, column=0, columnspan=3,
                                                     padx=16, pady=(10, 2), sticky="w")
-            lbl = ctk.CTkLabel(f, text="Sin seleccionar", text_color="gray",
-                               font=("System", 11), anchor="w")
+            lbl = ctk.CTkLabel(f, text="Sin seleccionar", text_color=("gray60", "gray50"),
+                               font=("Segoe UI", 11), anchor="w")
             lbl.grid(row=i*2, column=0, columnspan=2, padx=20, pady=(0, 4), sticky="ew")
             setattr(self, attr, lbl)
             ctk.CTkButton(f, text="Seleccionar", width=110, command=cmd).grid(
@@ -243,10 +243,10 @@ class App(ctk.CTk):
         f.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(f, text="Configura el nombre de los archivos",
-                     font=("System", 13, "bold")).grid(
+                     font=("Segoe UI", 13, "bold")).grid(
             row=0, column=0, columnspan=2, pady=(16, 4), padx=16, sticky="w")
         ctk.CTkLabel(f, text="Usa {{NombreColumna}} para insertar datos del Excel en el nombre del archivo y en la plantilla Word.",
-                     text_color="gray", font=("System", 11), wraplength=580, justify="left").grid(
+                     text_color=("gray60", "gray50"), font=("Segoe UI", 11), wraplength=580, justify="left").grid(
             row=1, column=0, columnspan=2, padx=16, pady=(0, 16), sticky="w")
 
         # Patrón nombre archivo
@@ -260,10 +260,10 @@ class App(ctk.CTk):
             row=3, column=0, columnspan=2, sticky="ew", padx=16, pady=12)
 
         # Insertar campo
-        ctk.CTkLabel(f, text="Insertar campo:", font=("System", 12, "bold")).grid(
+        ctk.CTkLabel(f, text="Insertar campo:", font=("Segoe UI", 12, "bold")).grid(
             row=4, column=0, padx=16, pady=(0, 6), sticky="w")
         ctk.CTkLabel(f, text="Selecciona un campo y cópialo para pegarlo en la plantilla Word o en el patrón.",
-                     text_color="gray", font=("System", 11)).grid(
+                     text_color=("gray60", "gray50"), font=("Segoe UI", 11)).grid(
             row=5, column=0, columnspan=2, padx=16, pady=(0, 8), sticky="w")
 
         frame_insert = ctk.CTkFrame(f, fg_color="transparent")
@@ -292,7 +292,7 @@ class App(ctk.CTk):
         # f.grid_columnconfigure(1, weight=1)  # INCORRECTO: La columna 1 es para la scrollbar en CTKScrollableFrame.
 
         ctk.CTkLabel(f, text="Configura el correo electrónico",
-                     font=("System", 13, "bold")).grid(
+                     font=("Segoe UI", 13, "bold")).grid(
             row=0, column=0, columnspan=3, pady=(12, 6), padx=16, sticky="w")
 
         # Modo email
@@ -321,7 +321,7 @@ class App(ctk.CTk):
         # Template
         self.lbl_oft      = ctk.CTkLabel(self.email_inner, text="Archivo .oft:")
         self.lbl_oft_path = ctk.CTkLabel(self.email_inner, text="Sin seleccionar",
-                                          text_color="gray")
+                                          text_color=("gray60", "gray50"))
         self.btn_oft      = ctk.CTkButton(self.email_inner, text="Seleccionar .oft",
                                            command=self.select_oft)
         self.toggle_email_mode()
@@ -408,10 +408,10 @@ class App(ctk.CTk):
         f.grid_rowconfigure(2, weight=1)
 
         ctk.CTkLabel(f, text="Todo listo — pulsa Generar para empezar",
-                     font=("System", 13, "bold")).grid(
+                     font=("Segoe UI", 13, "bold")).grid(
             row=0, column=0, pady=(16, 4), padx=16, sticky="w")
         ctk.CTkLabel(f, text="El progreso aparecerá en el log de abajo.",
-                     text_color="gray", font=("System", 11)).grid(
+                     text_color=("gray60", "gray50"), font=("Segoe UI", 11)).grid(
             row=1, column=0, padx=16, pady=(0, 10), sticky="w")
 
         # Barra de progreso
@@ -421,8 +421,8 @@ class App(ctk.CTk):
         self.progress_bar = ctk.CTkProgressBar(prog_frame)
         self.progress_bar.grid(row=0, column=0, sticky="ew")
         self.progress_bar.set(0)
-        self.lbl_progress = ctk.CTkLabel(prog_frame, text="", text_color="gray",
-                                          font=("System", 11))
+        self.lbl_progress = ctk.CTkLabel(prog_frame, text="", text_color=("gray60", "gray50"),
+                                          font=("Segoe UI", 11))
         self.lbl_progress.grid(row=1, column=0, sticky="w", pady=(2, 0))
 
         # Log
