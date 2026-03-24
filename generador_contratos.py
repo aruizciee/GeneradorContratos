@@ -286,7 +286,7 @@ class App(ctk.CTk):
     # PASO 3 — Correo
     # ═══════════════════════════════════════════════════════════════════════════
     def _build_step3(self):
-        f = ctk.CTkFrame(self.content)
+        f = ctk.CTkScrollableFrame(self.content)
         self.step_frames.append(f)
         f.grid_columnconfigure(1, weight=1)
 
