@@ -241,38 +241,32 @@ class App(ctk.CTk):
         self.step_frames.append(f)
         f.grid_columnconfigure(1, weight=1)
 
-        ctk.CTkLabel(f, text="Configura las columnas del Excel",
+        ctk.CTkLabel(f, text="Configura el nombre de los archivos",
                      font=("System", 13, "bold")).grid(
             row=0, column=0, columnspan=2, pady=(16, 4), padx=16, sticky="w")
-        ctk.CTkLabel(f, text="Usa {{NombreColumna}} en la plantilla Word y en asunto/cuerpo del correo.",
+        ctk.CTkLabel(f, text="Usa {{NombreColumna}} para insertar datos del Excel en el nombre del archivo y en la plantilla Word.",
                      text_color="gray", font=("System", 11), wraplength=580, justify="left").grid(
             row=1, column=0, columnspan=2, padx=16, pady=(0, 16), sticky="w")
 
-        # Columna de email
-        ctk.CTkLabel(f, text="Columna de Email:").grid(row=2, column=0, padx=16, pady=6, sticky="w")
-        self.entry_email_col = ctk.CTkComboBox(f, values=["Email"], state="normal")
-        self.entry_email_col.set("Email")
-        self.entry_email_col.grid(row=2, column=1, padx=16, pady=6, sticky="ew")
-
         # Patrón nombre archivo
-        ctk.CTkLabel(f, text="Patrón nombre archivo:").grid(row=3, column=0, padx=16, pady=6, sticky="w")
+        ctk.CTkLabel(f, text="Patrón nombre archivo:").grid(row=2, column=0, padx=16, pady=6, sticky="w")
         self.entry_filename_pattern = ctk.CTkEntry(f, placeholder_text="Ej: {{Apellidos}}, {{Nombre}}")
         self.entry_filename_pattern.insert(0, "{{Apellidos}}, {{Nombre}}")
-        self.entry_filename_pattern.grid(row=3, column=1, padx=16, pady=6, sticky="ew")
+        self.entry_filename_pattern.grid(row=2, column=1, padx=16, pady=6, sticky="ew")
 
         # Separador
         ctk.CTkFrame(f, height=1, fg_color="gray70").grid(
-            row=4, column=0, columnspan=2, sticky="ew", padx=16, pady=12)
+            row=3, column=0, columnspan=2, sticky="ew", padx=16, pady=12)
 
         # Insertar campo
         ctk.CTkLabel(f, text="Insertar campo:", font=("System", 12, "bold")).grid(
-            row=5, column=0, padx=16, pady=(0, 6), sticky="w")
-        ctk.CTkLabel(f, text="Selecciona un campo y úsalo donde necesites.",
+            row=4, column=0, padx=16, pady=(0, 6), sticky="w")
+        ctk.CTkLabel(f, text="Selecciona un campo y cópialo para pegarlo en la plantilla Word o en el patrón.",
                      text_color="gray", font=("System", 11)).grid(
-            row=6, column=0, columnspan=2, padx=16, pady=(0, 8), sticky="w")
+            row=5, column=0, columnspan=2, padx=16, pady=(0, 8), sticky="w")
 
         frame_insert = ctk.CTkFrame(f, fg_color="transparent")
-        frame_insert.grid(row=7, column=0, columnspan=2, padx=16, sticky="ew")
+        frame_insert.grid(row=6, column=0, columnspan=2, padx=16, sticky="ew")
         frame_insert.grid_columnconfigure(0, weight=1)
 
         self.combo_fields = ctk.CTkComboBox(frame_insert,
@@ -331,10 +325,35 @@ class App(ctk.CTk):
                                            command=self.select_oft)
         self.toggle_email_mode()
 
+        # ── Destinatarios ──────────────────────────────────────────────────────
+        ctk.CTkFrame(f, height=1, fg_color="gray70").grid(
+            row=3, column=0, columnspan=3, sticky="ew", padx=16, pady=(6, 4))
+
+        # Para (columna Excel) + adicional
+        ctk.CTkLabel(f, text="Para (columna):").grid(row=4, column=0, padx=16, pady=3, sticky="w")
+        self.entry_email_col = ctk.CTkComboBox(f, values=["Email"], state="normal")
+        self.entry_email_col.set("Email")
+        self.entry_email_col.grid(row=4, column=1, columnspan=2, padx=16, pady=3, sticky="ew")
+
+        ctk.CTkLabel(f, text="Para (adicional):").grid(row=5, column=0, padx=16, pady=3, sticky="w")
+        self.entry_to_extra = ctk.CTkEntry(f, placeholder_text="extra@ejemplo.com; otro@ejemplo.com")
+        self.entry_to_extra.grid(row=5, column=1, columnspan=2, padx=16, pady=3, sticky="ew")
+
+        ctk.CTkLabel(f, text="CC:").grid(row=6, column=0, padx=16, pady=3, sticky="w")
+        self.entry_cc = ctk.CTkEntry(f, placeholder_text="copia@ejemplo.com  o  {{ColumnaCC}}")
+        self.entry_cc.grid(row=6, column=1, columnspan=2, padx=16, pady=3, sticky="ew")
+
+        ctk.CTkLabel(f, text="CCO:").grid(row=7, column=0, padx=16, pady=3, sticky="w")
+        self.entry_bcc = ctk.CTkEntry(f, placeholder_text="oculto@ejemplo.com  o  {{ColumnaCCO}}")
+        self.entry_bcc.grid(row=7, column=1, columnspan=2, padx=16, pady=3, sticky="ew")
+
+        ctk.CTkFrame(f, height=1, fg_color="gray70").grid(
+            row=8, column=0, columnspan=3, sticky="ew", padx=16, pady=(4, 2))
+
         # Insertar campo — justo debajo del asunto/cuerpo
-        ctk.CTkLabel(f, text="Insertar campo:").grid(row=3, column=0, padx=16, pady=(6, 4), sticky="w")
+        ctk.CTkLabel(f, text="Insertar campo:").grid(row=9, column=0, padx=16, pady=(6, 4), sticky="w")
         field_row = ctk.CTkFrame(f, fg_color="transparent")
-        field_row.grid(row=3, column=1, columnspan=2, sticky="ew", padx=16, pady=(6, 4))
+        field_row.grid(row=9, column=1, columnspan=2, sticky="ew", padx=16, pady=(6, 4))
         field_row.grid_columnconfigure(0, weight=1)
         self.combo_fields_email = ctk.CTkComboBox(field_row, values=["(carga un Excel primero)"], state="readonly")
         self.combo_fields_email.set("(carga un Excel primero)")
@@ -350,12 +369,12 @@ class App(ctk.CTk):
 
         # Separador
         ctk.CTkFrame(f, height=1, fg_color="gray70").grid(
-            row=4, column=0, columnspan=3, sticky="ew", padx=16, pady=(6, 4))
+            row=10, column=0, columnspan=3, sticky="ew", padx=16, pady=(6, 4))
 
         # Cuenta + formato + modo envío
-        ctk.CTkLabel(f, text="Cuenta de envío:").grid(row=5, column=0, padx=16, pady=3, sticky="w")
+        ctk.CTkLabel(f, text="Cuenta de envío:").grid(row=11, column=0, padx=16, pady=3, sticky="w")
         acc_row = ctk.CTkFrame(f, fg_color="transparent")
-        acc_row.grid(row=5, column=1, columnspan=2, sticky="ew", padx=16, pady=3)
+        acc_row.grid(row=11, column=1, columnspan=2, sticky="ew", padx=16, pady=3)
         acc_row.grid_columnconfigure(0, weight=1)
         self.combo_account = ctk.CTkComboBox(acc_row, values=["(cargando…)"], state="readonly")
         self.combo_account.set("(cargando…)")
@@ -363,17 +382,17 @@ class App(ctk.CTk):
         ctk.CTkButton(acc_row, text="↺", width=32,
                       command=self._load_outlook_accounts).grid(row=0, column=1, padx=(6, 0))
 
-        ctk.CTkLabel(f, text="Formato archivo:").grid(row=6, column=0, padx=16, pady=3, sticky="w")
+        ctk.CTkLabel(f, text="Formato archivo:").grid(row=12, column=0, padx=16, pady=3, sticky="w")
         self.output_format = ctk.StringVar(value="pdf")
         fmt_row = ctk.CTkFrame(f, fg_color="transparent")
-        fmt_row.grid(row=6, column=1, columnspan=2, sticky="w", padx=16, pady=3)
+        fmt_row.grid(row=12, column=1, columnspan=2, sticky="w", padx=16, pady=3)
         ctk.CTkRadioButton(fmt_row, text="PDF", variable=self.output_format, value="pdf").pack(side="left", padx=(0, 16))
         ctk.CTkRadioButton(fmt_row, text="Word (.docx)", variable=self.output_format, value="docx").pack(side="left")
 
-        ctk.CTkLabel(f, text="Modo envío:").grid(row=7, column=0, padx=16, pady=3, sticky="w")
+        ctk.CTkLabel(f, text="Modo envío:").grid(row=13, column=0, padx=16, pady=3, sticky="w")
         self.send_mode = ctk.StringVar(value="draft")
         snd_row = ctk.CTkFrame(f, fg_color="transparent")
-        snd_row.grid(row=7, column=1, columnspan=2, sticky="w", padx=16, pady=3)
+        snd_row.grid(row=13, column=1, columnspan=2, sticky="w", padx=16, pady=3)
         ctk.CTkRadioButton(snd_row, text="Guardar en Borradores", variable=self.send_mode, value="draft").pack(side="left", padx=(0, 10))
         ctk.CTkRadioButton(snd_row, text="Enviar directamente", variable=self.send_mode, value="send").pack(side="left", padx=(0, 10))
         ctk.CTkRadioButton(snd_row, text="Solo generar archivos", variable=self.send_mode, value="none").pack(side="left")
@@ -456,6 +475,8 @@ class App(ctk.CTk):
             self.combo_fields_email.set(cols[0])
             if self.entry_email_col.get() not in cols:
                 self.entry_email_col.set(cols[0])
+            self.log(f"Excel cargado: {len(cols)} columnas — {', '.join(cols)}"
+                     if hasattr(self, 'log_box') else None)
 
     def _copy_field_to_clipboard(self):
         col = self.combo_fields.get()
@@ -517,6 +538,12 @@ class App(ctk.CTk):
                 self.combo_fields_email.set(cfg["email_col"])
         if cfg.get("email_col"):
             self.entry_email_col.set(cfg["email_col"])
+        for entry, key in [(self.entry_to_extra, "to_extra"),
+                           (self.entry_cc,       "cc"),
+                           (self.entry_bcc,      "bcc")]:
+            if cfg.get(key):
+                entry.delete(0, "end")
+                entry.insert(0, cfg[key])
         if cfg.get("filename_pattern"):
             self.entry_filename_pattern.delete(0, "end")
             self.entry_filename_pattern.insert(0, cfg["filename_pattern"])
@@ -541,6 +568,9 @@ class App(ctk.CTk):
             "output_folder":         self.output_folder,
             "outlook_template_path": self.outlook_template_path,
             "email_col":             self.entry_email_col.get(),
+            "to_extra":              self.entry_to_extra.get(),
+            "cc":                    self.entry_cc.get(),
+            "bcc":                   self.entry_bcc.get(),
             "filename_pattern":      self.entry_filename_pattern.get(),
             "email_subject":         self.entry_subject.get(),
             "email_body":            self.txt_body.get("1.0", "end-1c"),
@@ -735,7 +765,13 @@ class App(ctk.CTk):
                             mail.Body = substitute_variables(mail.Body, context)
                         mail.Subject = substitute_variables(mail.Subject or "", context)
 
-                    mail.To = dest_email
+                    to_extra = substitute_variables(self.entry_to_extra.get().strip(), context)
+                    cc_val   = substitute_variables(self.entry_cc.get().strip(), context)
+                    bcc_val  = substitute_variables(self.entry_bcc.get().strip(), context)
+
+                    mail.To  = "; ".join(filter(None, [dest_email, to_extra]))
+                    if cc_val:  mail.CC  = cc_val
+                    if bcc_val: mail.BCC = bcc_val
                     if send_account:
                         mail.SendUsingAccount = send_account
                     mail.Attachments.Add(os.path.abspath(final_path))
@@ -747,7 +783,11 @@ class App(ctk.CTk):
                         mail.Save()
                         action = "Borrador para"
 
-                    self.log(f"Fila {row_num}: OK — {os.path.basename(final_path)} | {action} {dest_email}")
+                    extras = "".join([
+                        f" | CC: {cc_val}"  if cc_val  else "",
+                        f" | CCO: {bcc_val}" if bcc_val else "",
+                    ])
+                    self.log(f"Fila {row_num}: OK — {os.path.basename(final_path)} | {action} {mail.To}{extras}")
 
                 except Exception as e:
                     self.log(f"Error fila {row_num}: {e}")
