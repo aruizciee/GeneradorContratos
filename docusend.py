@@ -745,8 +745,8 @@ class App(ctk.CTk):
                 return False
         elif mode == "autofirma":
             try:
-                # Remove -store auto to force GUI and add -gui to show the Java dialogue
-                cmd = ["AutoFirma", "commandline", "-i", os.path.abspath(input_pdf), "-o", os.path.abspath(output_pdf), "-format", "pdf", "-gui"]
+                # Quitamos 'commandline' completamente para que invoque la aplicación visual de AutoFirma normalmente
+                cmd = ["AutoFirma", "-i", os.path.abspath(input_pdf), "-o", os.path.abspath(output_pdf), "-format", "pdf"]
                 self.log("Abriendo AutoFirma (por favor revisa si pide PIN/Certificado en una ventana nueva)...")
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 if result.returncode == 0:
