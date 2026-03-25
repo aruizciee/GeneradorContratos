@@ -22,7 +22,7 @@ try:
 except ImportError:
     PYHANKO_AVAILABLE = False
 
-CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".generador_contratos_config.json")
+CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".docusend_config.json")
 
 def load_config():
     try:
@@ -51,7 +51,7 @@ STEPS = ["Archivos", "Configuración", "Correo", "Generar"]
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("Generador de Contratos y Correos")
+        self.title("DocuSend")
         self.geometry("700x620")
         self.resizable(False, False)
 
@@ -74,7 +74,7 @@ class App(ctk.CTk):
         hdr = ctk.CTkFrame(self, fg_color=("#1f538d", "#14375e"), corner_radius=0)
         hdr.grid(row=0, column=0, sticky="ew")
         hdr.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(hdr, text="Generador de Contratos y Correos", text_color="white",
+        ctk.CTkLabel(hdr, text="DocuSend", text_color="white",
                      font=("Segoe UI", 16, "bold")).grid(row=0, column=0, pady=12, padx=20, sticky="w")
         ctk.CTkLabel(hdr, text=f"v{VERSION}", text_color=("gray60", "gray50"),
                      font=("Segoe UI", 11)).grid(row=0, column=1, pady=12, padx=20, sticky="e")

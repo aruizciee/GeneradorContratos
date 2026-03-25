@@ -39,7 +39,7 @@ jobs:
           pyinstaller --noconfirm --onefile --windowed `
             --collect-all customtkinter `
             --runtime-tmpdir "." `
-            generador_contratos.py
+            docusend.py
 
       - name: Crear Release y subir .exe
         uses: softprops/action-gh-release@v2
@@ -51,6 +51,6 @@ jobs:
 
             **Commit:** ${{ github.sha }}
             **Mensaje:** ${{ github.event.head_commit.message }}
-          files: dist/generador_contratos.exe
+          files: dist/docusend.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
