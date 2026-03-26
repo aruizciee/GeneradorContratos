@@ -760,7 +760,8 @@ class App(ctk.CTk):
                     "-certgui"
                 ]
                 self.log("Abriendo AutoFirma (selecciona tu certificado en la ventana que aparece)...")
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=120,
+                                       creationflags=subprocess.CREATE_NO_WINDOW)
                 if result.returncode == 0 and os.path.isfile(output_pdf):
                     return True
                 else:
