@@ -27,3 +27,9 @@ Thumbs.db
 
 # Archivos comprimidos con datos
 *.zip
+
+# Archivos locales / pruebas
+test*.py
+test*.txt
+*.docx
+*_out.txt
