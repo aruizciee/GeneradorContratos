@@ -76,7 +76,7 @@ class App(ctk.CTk):
         hdr.grid_columnconfigure(0, weight=1)
         ctk.CTkLabel(hdr, text="DocuSend", text_color="white",
                      font=("Segoe UI", 16, "bold")).grid(row=0, column=0, pady=12, padx=20, sticky="w")
-        ctk.CTkLabel(hdr, text=f"v{VERSION}", text_color=("gray60", "gray50"),
+        ctk.CTkLabel(hdr, text=VERSION, text_color=("gray60", "gray50"),
                      font=("Segoe UI", 11)).grid(row=0, column=1, pady=12, padx=20, sticky="e")
 
         # ── Contenido central ─────────────────────────────────────────────────
@@ -330,7 +330,8 @@ class App(ctk.CTk):
     def _build_step3(self):
         f = ctk.CTkScrollableFrame(self.content)
         self.step_frames.append(f)
-        # f.grid_columnconfigure(1, weight=1)  # INCORRECTO: La columna 1 es para la scrollbar en CTKScrollableFrame.
+        f.grid_columnconfigure(0, weight=0)
+        f.grid_columnconfigure(1, weight=1)
 
         ctk.CTkLabel(f, text="Configura el correo electrónico",
                      font=("Segoe UI", 13, "bold")).grid(

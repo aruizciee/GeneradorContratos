@@ -19,7 +19,7 @@ except ImportError:
 
 GITHUB_REPO  = "aruizciee/GeneradorContratos"
 GITHUB_API   = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
-EXE_NAME     = "generador_contratos.exe"
+EXE_NAME     = "docusend.exe"
 
 
 # ---------------------------------------------------------------------------
